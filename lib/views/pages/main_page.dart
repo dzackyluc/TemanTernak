@@ -76,14 +76,11 @@ class MainPageState extends State<MainPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Container(
-          decoration:
-              const BoxDecoration(color: Color.fromARGB(255, 241, 244, 249)),
-          child: Column(
-            children: <Widget>[AppBarExtended(), page[selectedIndex]],
-          ),
+      body: Container(
+        decoration:
+            const BoxDecoration(color: Color.fromARGB(255, 241, 244, 249)),
+        child: Column(
+          children: <Widget>[AppBarExtended(), page[selectedIndex]],
         ),
       ),
     );

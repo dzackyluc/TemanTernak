@@ -1,6 +1,11 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:temanternak/services/storage_service.dart';
+import 'package:http/http.dart' as http;
 
 class AppBarExtended extends StatefulWidget {
   const AppBarExtended({super.key});
@@ -38,6 +43,30 @@ class AppBarExtendedState extends State<AppBarExtended> {
   //get the month
   late String month = months[now.month - 1];
 
+  late Future<Map<String, dynamic>> profile;
+
+  @override
+  void initState() {
+    super.initState();
+    profile = getProfile();
+  }
+
+  Future<Map<String, dynamic>> getProfile() async {
+    StorageService storageService = StorageService();
+    String? token = await storageService.getData("token");
+    var url = Uri.parse("https://api.temanternak.h14.my.id/users/my");
+    var response = await http.get(url, headers: {
+      "Authorization": "Bearer $token",
+    });
+    return jsonDecode(response.body);
+  }
+
+  void refreshProfile() {
+    setState(() {
+      profile = getProfile();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -61,13 +90,13 @@ class AppBarExtendedState extends State<AppBarExtended> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Padding(
-                  padding: EdgeInsets.fromLTRB(12, 0, 0, 0),
+                  padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_month),
-                      SizedBox(width: 2),
+                      const Icon(Icons.calendar_month),
+                      const SizedBox(width: 2),
                       Text("$dayOfWeek , ${now.day} $month ${now.year}",
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 13,
                               fontFamily: "Poppins",
                               fontWeight: FontWeight.w600))
@@ -84,7 +113,9 @@ class AppBarExtendedState extends State<AppBarExtended> {
                         border: Border.all(color: Colors.grey, width: 2),
                       ),
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          getProfile();
+                        },
                         icon: Icon(Icons.notifications, size: 20),
                       ),
                     ),
@@ -129,16 +160,39 @@ class AppBarExtendedState extends State<AppBarExtended> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(
-                            width: 280,
-                            child: Text("Hello, Hasan Ismail Abdulmalik",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: "Poppins",
-                                    fontWeight: FontWeight.bold),
-                                maxLines: 1,
-                                overflow: TextOverflow.clip),
-                          ),
+                          FutureBuilder(
+                              future: profile,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey,
+                                    highlightColor: Colors.white,
+                                    child: Container(
+                                      width: 200,
+                                      height: 13,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey,
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                    ),
+                                  );
+                                } else {
+                                  var data =
+                                      snapshot.data as Map<String, dynamic>?;
+                                  return SizedBox(
+                                    width: 280,
+                                    child: Text(
+                                        "Hello, ${data!['data']['name']}",
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontFamily: "Poppins",
+                                            fontWeight: FontWeight.bold),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.clip),
+                                  );
+                                }
+                              }),
                           SizedBox(
                             width: 265,
                             height: 30,
