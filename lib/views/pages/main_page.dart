@@ -5,6 +5,7 @@ import 'package:temanternak/views/components/app_bar_extended.dart';
 import 'package:temanternak/views/components/home_page.dart';
 import 'package:temanternak/views/components/list_chat_page.dart';
 import 'package:temanternak/views/components/log_page.dart';
+import 'package:temanternak/views/components/settings_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -19,7 +20,7 @@ class MainPageState extends State<MainPage> {
     HomePage(),
     ListChatPage(),
     LogPage(),
-    HomePage(),
+    SettingsPage()
   ];
 
   final PageController _pageController = PageController();
