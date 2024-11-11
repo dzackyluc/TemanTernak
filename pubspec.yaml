@@ -38,6 +38,8 @@ dependencies:
   http: ^1.2.2
   flutter_secure_storage: ^9.2.2
   shimmer: ^3.0.0
+  sip_ua: ^1.0.0
+  flutter_webrtc: ^0.10.4
 
 dev_dependencies:
   flutter_test:

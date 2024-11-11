@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:temanternak/services/storage_service.dart';
+import 'package:temanternak/views/pages/veterinary_service_page.dart';
 
 class VeterinaryPage extends StatefulWidget {
   const VeterinaryPage({super.key});
@@ -12,8 +13,10 @@ class VeterinaryPage extends StatefulWidget {
 }
 
 class VeterinaryPageState extends State<VeterinaryPage> {
-  late Future<Map<String, dynamic>> veterinary;
+  late Future<List<dynamic>> veterinary;
   StorageService storageService = StorageService();
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -21,20 +24,10 @@ class VeterinaryPageState extends State<VeterinaryPage> {
     veterinary = getVeterinary();
   }
 
-  Future<Map<String, dynamic>> getVeterinary() async {
-    var url =
-        Uri.parse("https://api.temanternak.h14.my.id/veterinarians/services");
+  Future<List<dynamic>> getVeterinary() async {
+    var url = Uri.parse("https://api.temanternak.h14.my.id/veterinarians");
     var response = await http.get(url);
-    return jsonDecode(response.body);
-  }
-
-  Future<String> _getFinalImageUrl(String url) async {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      return response.request!.url.toString();
-    } else {
-      throw Exception('Failed to load image');
-    }
+    return jsonDecode(response.body)["data"];
   }
 
   @override
@@ -48,157 +41,166 @@ class VeterinaryPageState extends State<VeterinaryPage> {
               fontSize: 20, fontFamily: "Poppins", fontWeight: FontWeight.w600),
         ),
       ),
-      body: Container(
-        decoration:
-            const BoxDecoration(color: Color.fromARGB(255, 241, 244, 249)),
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: 620,
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: veterinary,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData ||
-                      snapshot.data!["data"].isEmpty) {
-                    return const Center(child: Text('Tidak Ada Dokter'));
-                  } else {
-                    return ListView.builder(
-                      itemCount: snapshot.data!["data"].length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Container(
-                          margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(20)),
-                            boxShadow: const [
-                              BoxShadow(
-                                blurRadius: 2,
-                              )
-                            ],
+      body: SingleChildScrollView(
+        child: Container(
+          decoration:
+              const BoxDecoration(color: Color.fromARGB(255, 241, 244, 249)),
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                    width: 350,
+                    height: 40,
+                    child: Center(
+                      child: TextField(
+                        style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontFamily: "Poppins",
+                            fontWeight: FontWeight.w400),
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search by name',
+                          hintStyle: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontFamily: "Poppins",
+                              fontWeight: FontWeight.w400),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Column(
-                            children: <Widget>[
-                              Row(
-                                children: <Widget>[
-                                  Container(
-                                    margin:
-                                        const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                                    height: 80,
-                                    width: 80,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                            "https://api.temanternak.h14.my.id/${snapshot.data!["data"][index]["veterinarian"]["formalPicturePath"]}"),
-                                        fit: BoxFit.fill,
+                          prefixIcon:
+                              const Icon(Icons.search, color: Colors.black),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            searchQuery = value;
+                          });
+                        },
+                      ),
+                    )),
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height - 100,
+                child: FutureBuilder<List<dynamic>>(
+                  future: veterinary,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('Tidak Ada Dokter'));
+                    } else {
+                      var filteredList = snapshot.data!.where((vet) {
+                        return vet["nameAndTitle"]
+                            .toLowerCase()
+                            .contains(searchQuery.toLowerCase());
+                      }).toList();
+
+                      return ListView.builder(
+                        itemCount: filteredList.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Container(
+                            margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(20)),
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 2,
+                                )
+                              ],
+                            ),
+                            child: Column(
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Container(
+                                      margin: const EdgeInsets.fromLTRB(
+                                          10, 10, 0, 0),
+                                      height: 80,
+                                      width: 80,
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: NetworkImage(
+                                              "https://api.temanternak.h14.my.id/${filteredList[index]["formalPicturePath"]}"),
+                                          fit: BoxFit.fill,
+                                        ),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(10)),
                                       ),
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.circular(10)),
                                     ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Container(
-                                        margin: const EdgeInsets.fromLTRB(
-                                            10, 0, 0, 0),
-                                        child: Text(
-                                          "${snapshot.data!["data"][index]["veterinarian"]["nameAndTitle"]}",
-                                          style: const TextStyle(
-                                              fontSize: 20,
-                                              fontFamily: "Poppins",
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                      Container(
-                                        margin: const EdgeInsets.fromLTRB(
-                                            10, 0, 0, 0),
-                                        child: Text(
-                                          snapshot.data!["data"][index]
-                                                      ["veterinarian"]
-                                                  ["specialization"] ??
-                                              "Dokter Spesialis",
-                                          style: const TextStyle(
-                                              fontSize: 15,
-                                              fontFamily: "Poppins",
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                child: Text(
-                                  "${snapshot.data!["data"][index]["description"]}",
-                                  style: const TextStyle(
-                                      fontSize: 15,
-                                      fontFamily: "Poppins",
-                                      fontWeight: FontWeight.w400),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.clip,
-                                ),
-                              ),
-                              const Divider(
-                                color: Colors.grey,
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  Container(
-                                    margin:
-                                        const EdgeInsets.fromLTRB(10, 0, 0, 10),
-                                    child: Column(
+                                    Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Harga: Rp ${snapshot.data!["data"][index]["price"].toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.')}",
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              fontFamily: "Poppins"),
+                                      children: <Widget>[
+                                        Container(
+                                          width: 250,
+                                          margin: const EdgeInsets.fromLTRB(
+                                              10, 0, 0, 0),
+                                          child: Text(
+                                            "${filteredList[index]["nameAndTitle"]}",
+                                            style: const TextStyle(
+                                                fontSize: 20,
+                                                fontFamily: "Poppins",
+                                                fontWeight: FontWeight.w600),
+                                          ),
                                         ),
-                                        Text(
-                                          "Durasi: ${snapshot.data!["data"][index]["duration"]}s",
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              fontFamily: "Poppins"),
+                                        Container(
+                                          margin: const EdgeInsets.fromLTRB(
+                                              10, 0, 0, 0),
+                                          child: Text(
+                                            (filteredList[index]
+                                                        ["specializations"]
+                                                    as List<dynamic>)
+                                                .join(', '),
+                                            style: const TextStyle(
+                                                fontSize: 15,
+                                                fontFamily: "Poppins",
+                                                fontWeight: FontWeight.w400),
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  Container(
-                                    margin:
-                                        const EdgeInsets.fromLTRB(0, 0, 10, 10),
-                                    child: IconButton(
-                                      onPressed: () {},
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        Navigator.push(context,
+                                            MaterialPageRoute(
+                                                builder: (context) {
+                                          return VeterinaryServicePage(
+                                              veterinaryId: filteredList[index]
+                                                  ["id"]);
+                                        }));
+                                      },
                                       icon: const Icon(
                                         Icons.arrow_circle_right_sharp,
                                         size: 40,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
-                },
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

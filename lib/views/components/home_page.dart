@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:temanternak/views/components/app_bar_extended.dart';
 import 'package:temanternak/views/pages/veterinary_page.dart';
+import 'package:temanternak/views/pages/video_call_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -77,7 +78,12 @@ class HomePageState extends State<HomePage> {
                         children: [
                           FloatingActionButton(
                             heroTag: "ConsultationLogButton",
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => VideoCallPage()));
+                            },
                             backgroundColor: Colors.blue[100],
                             child: Icon(Icons.description_outlined),
                           ),

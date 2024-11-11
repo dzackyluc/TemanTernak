@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:temanternak/views/components/app_bar_extended.dart';
 import 'package:temanternak/views/components/home_page.dart';
+import 'package:temanternak/views/components/list_chat_page.dart';
 import 'package:temanternak/views/components/log_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -14,16 +15,24 @@ class MainPage extends StatefulWidget {
 
 class MainPageState extends State<MainPage> {
   int selectedIndex = 0;
-  List page = <Widget>[
+  List<Widget> page = <Widget>[
     HomePage(),
-    HomePage(),
+    ListChatPage(),
     LogPage(),
     HomePage(),
   ];
 
+  final PageController _pageController = PageController();
+
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -54,6 +63,9 @@ class MainPageState extends State<MainPage> {
             onDestinationSelected: (int index) {
               setState(() {
                 selectedIndex = index;
+                _pageController.animateToPage(page.indexOf(page[index]),
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut);
               });
             },
             destinations: [
@@ -80,7 +92,20 @@ class MainPageState extends State<MainPage> {
         decoration:
             const BoxDecoration(color: Color.fromARGB(255, 241, 244, 249)),
         child: Column(
-          children: <Widget>[AppBarExtended(), page[selectedIndex]],
+          children: <Widget>[
+            AppBarExtended(),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    selectedIndex = index;
+                  });
+                },
+                children: page,
+              ),
+            ),
+          ],
         ),
       ),
     );
