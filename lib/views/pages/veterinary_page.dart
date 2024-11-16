@@ -49,7 +49,7 @@ class VeterinaryPageState extends State<VeterinaryPage> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Container(
+                child: SizedBox(
                     width: 350,
                     height: 40,
                     child: Center(
@@ -61,7 +61,7 @@ class VeterinaryPageState extends State<VeterinaryPage> {
                             fontWeight: FontWeight.w400),
                         controller: searchController,
                         decoration: InputDecoration(
-                          hintText: 'Search by name',
+                          hintText: 'Cari berdasarkan Nama Dokter',
                           hintStyle: const TextStyle(
                               color: Colors.black,
                               fontSize: 12,

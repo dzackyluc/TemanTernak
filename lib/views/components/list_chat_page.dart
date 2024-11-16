@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:temanternak/views/pages/chat_page.dart';
 
 class ListChatPage extends StatefulWidget {
   const ListChatPage({super.key});
@@ -22,7 +23,39 @@ class ListChatPageState extends State<ListChatPage> {
               itemCount: 15,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text('Chat $index'),
+                  leading: const CircleAvatar(
+                    backgroundImage: AssetImage('lib/assets/images/logo.png'),
+                  ),
+                  title: const Text(
+                    'User Name',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Message',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color.fromARGB(255, 0, 0, 0),
+                      fontFamily: "Poppins",
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  trailing: const Text('Time'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatPage(),
+                      ),
+                    );
+                  },
                 );
               },
             ),

@@ -1,7 +1,10 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:temanternak/services/storage_service.dart';
 
 class VeterinaryServicePage extends StatefulWidget {
@@ -16,11 +19,34 @@ class VeterinaryServicePage extends StatefulWidget {
 class VeterinaryServicePageState extends State<VeterinaryServicePage> {
   late Future<Map<String, dynamic>> veterinaryService;
   StorageService storageService = StorageService();
+  MidtransSDK? _midtrans;
+  String? tanggal;
 
   @override
   void initState() {
     super.initState();
     veterinaryService = getVeterinaryService();
+    initSDK();
+  }
+
+  void initSDK() async {
+    _midtrans = await MidtransSDK.init(
+      config: MidtransConfig(
+        clientKey: "SB-Mid-client-ITTRLLHvX1zCIHBv",
+        merchantBaseUrl: "",
+        // colorTheme: ColorTheme(
+        //   colorPrimary: Theme.of(context).colorScheme.secondary,
+        //   colorPrimaryDark: Theme.of(context).colorScheme.secondary,
+        //   colorSecondary: Theme.of(context).colorScheme.secondary,
+        // ),
+      ),
+    );
+    _midtrans?.setUIKitCustomSetting(
+      skipCustomerDetailsPages: true,
+    );
+    _midtrans!.setTransactionFinishedCallback((result) {
+      print(result.toJson());
+    });
   }
 
   Future<Map<String, dynamic>> getVeterinaryService() async {
@@ -37,7 +63,7 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 241, 244, 249),
         title: const Text(
-          "Pilihan Service Dokter Hewan",
+          "Pilihan Layanan",
           style: TextStyle(
               fontSize: 20, fontFamily: "Poppins", fontWeight: FontWeight.w600),
         ),
@@ -49,7 +75,7 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
           children: <Widget>[
             SizedBox(
               width: MediaQuery.of(context).size.width,
-              height: 620,
+              height: MediaQuery.of(context).size.height - 100,
               child: FutureBuilder<Map<String, dynamic>>(
                 future: veterinaryService,
                 builder: (context, snapshot) {
@@ -59,7 +85,7 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData ||
                       snapshot.data?["data"]["services"].isEmpty) {
-                    return const Center(child: Text('Tidak Ada Services'));
+                    return const Center(child: Text('Tidak Ada Layanan'));
                   } else {
                     return ListView.builder(
                       itemCount: snapshot.data!["data"]["services"].length,
@@ -100,6 +126,7 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
                                         CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Container(
+                                        width: 250,
                                         margin: const EdgeInsets.fromLTRB(
                                             10, 0, 0, 0),
                                         child: Text(
@@ -173,9 +200,21 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
                                     margin:
                                         const EdgeInsets.fromLTRB(0, 0, 10, 10),
                                     child: IconButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return _showDialog();
+                                          },
+                                        ).then((_) {
+                                          setState(() {
+                                            tanggal = null;
+                                            print(tanggal);
+                                          });
+                                        });
+                                      },
                                       icon: const Icon(
-                                        Icons.arrow_circle_right_sharp,
+                                        Icons.payments,
                                         size: 40,
                                       ),
                                     ),
@@ -194,6 +233,163 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _showDialog() {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setStateDialog) {
+        return AlertDialog(
+          backgroundColor: Colors.transparent,
+          actionsPadding: EdgeInsets.zero,
+          content: Card(
+            surfaceTintColor: Colors.white,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: SizedBox(
+              height: 410,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      title: Text(
+                        'Dokter Name',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: "Poppins",
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Veterinary',
+                        style: TextStyle(fontSize: 14, fontFamily: "Poppins"),
+                      ),
+                      leading: Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(
+                                "https://media.istockphoto.com/id/1130884625/vector/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-app-in-circle-design.jpg?s=612x612&w=0&k=20&c=1ky-gNHiS2iyLsUPQkxAtPBWH1BZt0PKBB1WBtxQJRE="),
+                            fit: BoxFit.fill,
+                          ),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Layanan: ',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                        Text(
+                          'Veterinary Checkup',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Duration: ',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                        Text(
+                          '30s',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'price: ',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                        Text(
+                          '200.000',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Tanggal: ',
+                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                        ),
+                        GestureDetector(
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2101),
+                            );
+                            if (pickedDate != null) {
+                              TimeOfDay? pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (pickedTime != null) {
+                                setStateDialog(() {
+                                  final DateTime combinedDateTime = DateTime(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      pickedTime.hour,
+                                      pickedTime.minute);
+                                  tanggal = combinedDateTime.toString();
+                                  print(tanggal);
+                                });
+                              }
+                            }
+                          },
+                          child: Text(
+                            tanggal ?? 'Pilih Tanggal',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue,
+                                fontFamily: "Poppins"),
+                          ),
+                        )
+                      ],
+                    ),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[200],
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                      ),
+                      child: Text('Pesan Sekarang',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: "Poppins")),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
