@@ -19,8 +19,9 @@ class ListChatPageState extends State<ListChatPage> {
           SizedBox(
             height: 560,
             width: MediaQuery.of(context).size.width,
-            child: ListView.builder(
+            child: ListView.separated(
               itemCount: 15,
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 return ListTile(
                   leading: const CircleAvatar(

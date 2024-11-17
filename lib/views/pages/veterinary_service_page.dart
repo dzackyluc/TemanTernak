@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:midtrans_sdk/midtrans_sdk.dart';
+import 'package:intl/intl.dart';
 import 'package:temanternak/services/storage_service.dart';
 
 class VeterinaryServicePage extends StatefulWidget {
@@ -18,35 +18,16 @@ class VeterinaryServicePage extends StatefulWidget {
 
 class VeterinaryServicePageState extends State<VeterinaryServicePage> {
   late Future<Map<String, dynamic>> veterinaryService;
+  late Future<Map<String, dynamic>> veterinaryDate;
   StorageService storageService = StorageService();
-  MidtransSDK? _midtrans;
+  late List<DateTime> timestamps;
+  String? selectedDate;
   String? tanggal;
 
   @override
   void initState() {
     super.initState();
     veterinaryService = getVeterinaryService();
-    initSDK();
-  }
-
-  void initSDK() async {
-    _midtrans = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: "SB-Mid-client-ITTRLLHvX1zCIHBv",
-        merchantBaseUrl: "",
-        // colorTheme: ColorTheme(
-        //   colorPrimary: Theme.of(context).colorScheme.secondary,
-        //   colorPrimaryDark: Theme.of(context).colorScheme.secondary,
-        //   colorSecondary: Theme.of(context).colorScheme.secondary,
-        // ),
-      ),
-    );
-    _midtrans?.setUIKitCustomSetting(
-      skipCustomerDetailsPages: true,
-    );
-    _midtrans!.setTransactionFinishedCallback((result) {
-      print(result.toJson());
-    });
   }
 
   Future<Map<String, dynamic>> getVeterinaryService() async {
@@ -55,6 +36,36 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
     var response = await http.get(url);
     print(response.body);
     return jsonDecode(response.body);
+  }
+
+  Future<Map<String, dynamic>> getVeterinaryDate(serviceid) async {
+    var url = Uri.parse(
+        "https://api.temanternak.h14.my.id/veterinarians/services/$serviceid/startTimes");
+    var headers = {
+      "Authorization": "Bearer ${await storageService.getData("token")}"
+    };
+    var response = await http.get(url, headers: headers);
+    return jsonDecode(response.body);
+  }
+
+  void addBooking(id) async {
+    var url = Uri.parse(
+        "https://api.temanternak.h14.my.id/veterinarians/${widget.veterinaryId}/services/$id/bookings");
+    var headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer ${await storageService.getData("token")}"
+    };
+    var body = jsonEncode({
+      "startTime": selectedDate,
+    });
+    var response = await http.post(url, headers: headers, body: body);
+    print(response.body);
+  }
+
+  List<DateTime> parseTimestamps(List<dynamic> timestampStrings) {
+    return timestampStrings
+        .map((timestamp) => DateTime.parse(timestamp))
+        .toList();
   }
 
   @override
@@ -141,9 +152,10 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
                                         margin: const EdgeInsets.fromLTRB(
                                             10, 0, 0, 0),
                                         child: Text(
-                                          snapshot.data!["data"]
-                                                  ["specializations"][0] ??
-                                              "Dokter Spesialis",
+                                          (snapshot.data!["data"]
+                                                      ["specializations"]
+                                                  as List<dynamic>)
+                                              .join(", "),
                                           style: const TextStyle(
                                               fontSize: 15,
                                               fontFamily: "Poppins",
@@ -200,17 +212,41 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
                                     margin:
                                         const EdgeInsets.fromLTRB(0, 0, 10, 10),
                                     child: IconButton(
-                                      onPressed: () {
+                                      onPressed: () async {
+                                        veterinaryDate = getVeterinaryDate(
+                                            snapshot.data!["data"]["services"]
+                                                [index]["id"]);
+                                        await veterinaryDate.then((data) {
+                                          setState(() {
+                                            timestamps =
+                                                parseTimestamps(data["data"]);
+                                          });
+                                        });
                                         showDialog(
                                           context: context,
                                           builder: (BuildContext context) {
-                                            return _showDialog();
+                                            return _showDialog(
+                                                name: snapshot.data!["data"]
+                                                    ["nameAndTitle"],
+                                                specializations: (snapshot.data!["data"]
+                                                            ["specializations"]
+                                                        as List<dynamic>)
+                                                    .join(", "),
+                                                serviceName: snapshot.data!["data"]
+                                                    ["services"][index]["name"],
+                                                price: snapshot.data!["data"]["services"]
+                                                        [index]["price"]
+                                                    .toString()
+                                                    .replaceAllMapped(
+                                                        RegExp(r'\B(?=(\d{3})+(?!\d))'),
+                                                        (match) => '.'),
+                                                duration: snapshot.data!["data"]["services"][index]["duration"].toString(),
+                                                imageUrl: snapshot.data!["data"]["formalPicturePath"],
+                                                serviceId: snapshot.data!["data"]["services"][index]["id"]);
                                           },
-                                        ).then((_) {
-                                          setState(() {
-                                            tanggal = null;
-                                            print(tanggal);
-                                          });
+                                        ).then((value) {
+                                          selectedDate = null;
+                                          veterinaryDate = Future.value({});
                                         });
                                       },
                                       icon: const Icon(
@@ -236,7 +272,14 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
     );
   }
 
-  Widget _showDialog() {
+  Widget _showDialog(
+      {required name,
+      required specializations,
+      required serviceName,
+      required String price,
+      required String duration,
+      required String imageUrl,
+      required String serviceId}) {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setStateDialog) {
         return AlertDialog(
@@ -248,143 +291,157 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
-            child: SizedBox(
-              height: 410,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      title: Text(
-                        'Dokter Name',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Veterinary',
-                        style: TextStyle(fontSize: 14, fontFamily: "Poppins"),
-                      ),
-                      leading: Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(
-                                "https://media.istockphoto.com/id/1130884625/vector/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-app-in-circle-design.jpg?s=612x612&w=0&k=20&c=1ky-gNHiS2iyLsUPQkxAtPBWH1BZt0PKBB1WBtxQJRE="),
-                            fit: BoxFit.fill,
-                          ),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(10)),
-                        ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    title: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'Layanan: ',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                        Text(
-                          'Veterinary Checkup',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                      ],
+                    subtitle: Text(
+                      specializations,
+                      style: TextStyle(fontSize: 11, fontFamily: "Poppins"),
                     ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'Duration: ',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                    leading: Container(
+                      height: 45,
+                      width: 45,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              "https://api.temanternak.h14.my.id/$imageUrl"),
+                          fit: BoxFit.fill,
                         ),
-                        Text(
-                          '30s',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                      ],
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(10)),
+                      ),
                     ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'price: ',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                        Text(
-                          '200.000',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'Tanggal: ',
-                          style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime(2101),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        'Layanan: ',
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                      Text(
+                        serviceName,
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        'Durasi: ',
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                      Text(
+                        "${duration}s",
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        'Harga: ',
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                      Text(
+                        "Rp $price",
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        'Tanggal: ',
+                        style: TextStyle(fontSize: 12, fontFamily: "Poppins"),
+                      ),
+                      SizedBox(
+                        width: 105,
+                        height: 30,
+                        child: DropdownButton<String>(
+                          iconSize: 14,
+                          value: selectedDate,
+                          items: timestamps.map((dynamic timestamp) {
+                            DateTime dateTime =
+                                DateTime.parse(timestamp.toString());
+                            String formattedDate =
+                                DateFormat('dd-MM-yyyy HH:mm').format(dateTime);
+                            return DropdownMenuItem<String>(
+                              value: timestamp.toString(),
+                              child: Text(formattedDate,
+                                  style: TextStyle(
+                                    fontFamily: "Poppins",
+                                    fontSize: 10,
+                                  )),
                             );
-                            if (pickedDate != null) {
-                              TimeOfDay? pickedTime = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              if (pickedTime != null) {
-                                setStateDialog(() {
-                                  final DateTime combinedDateTime = DateTime(
-                                      pickedDate.year,
-                                      pickedDate.month,
-                                      pickedDate.day,
-                                      pickedTime.hour,
-                                      pickedTime.minute);
-                                  tanggal = combinedDateTime.toString();
-                                  print(tanggal);
-                                });
-                              }
-                            }
+                          }).toList(),
+                          onChanged: (String? value) {
+                            setStateDialog(() {
+                              selectedDate = value;
+                            });
                           },
-                          child: Text(
-                            tanggal ?? 'Pilih Tanggal',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue,
-                                fontFamily: "Poppins"),
-                          ),
-                        )
-                      ],
-                    ),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[200],
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                        ),
                       ),
-                      child: Text('Pesan Sekarang',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontFamily: "Poppins")),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigator.pop(context);
+                      // Navigator.push(context,
+                      //     MaterialPageRoute(builder: (context) {
+                      //   return BookingPendingPage();
+                      // }));
+                      if (selectedDate != null) {
+                        // Navigator.push(context,
+                        //     MaterialPageRoute(builder: (context) {
+                        //   return BookingPendingPage();
+                        // }));
+                        addBooking(serviceId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  'Pemesanan berhasil, silahkan cek status pemesanan di menu "Pemesanan"')),
+                        );
+                        // Navigator.pop(context);
+                      } else {
+                        // Show a message or handle the case when the dropdown is not selected
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  'Silahkan pilih tanggal terlebih dahulu')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[200],
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 45, vertical: 8),
                     ),
-                  ],
-                ),
+                    child: Text('Pesan Sekarang',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: "Poppins")),
+                  ),
+                ],
               ),
             ),
           ),
