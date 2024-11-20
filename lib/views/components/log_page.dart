@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:shimmer/shimmer.dart';
 import 'dart:convert';
 import 'package:temanternak/services/storage_service.dart';
 import 'package:temanternak/views/pages/booking_details_page.dart';
@@ -16,7 +17,7 @@ class LogPageState extends State<LogPage> {
   late Future<List<Map<String, dynamic>>> bookings;
 
   String _formatDateTime(String dateTimeStr) {
-    final dateTime = DateTime.parse(dateTimeStr);
+    final dateTime = DateTime.parse(dateTimeStr).toLocal();
     return DateFormat('dd MMM yyyy, HH:mm').format(dateTime);
   }
 
@@ -70,7 +71,31 @@ class LogPageState extends State<LogPage> {
         future: bookings,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Shimmer.fromColors(
+              baseColor: Colors.grey,
+              highlightColor: Colors.grey[100]!,
+              child: ListView.builder(
+                itemCount: 10,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: const CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.white,
+                    ),
+                    title: Container(
+                      width: 100.0,
+                      height: 10.0,
+                      color: Colors.white,
+                    ),
+                    subtitle: Container(
+                      width: 60.0,
+                      height: 20.0,
+                      color: Colors.white,
+                    ),
+                  );
+                },
+              ),
+            );
           } else {
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));

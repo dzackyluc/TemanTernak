@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:temanternak/services/storage_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:temanternak/views/pages/booking_details_page.dart';
 
 class AppBarExtended extends StatefulWidget {
   const AppBarExtended({super.key});

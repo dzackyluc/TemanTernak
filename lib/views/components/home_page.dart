@@ -110,14 +110,14 @@ class HomePageState extends State<HomePage> {
                             heroTag: "StoreButton",
                             onPressed: () {},
                             backgroundColor: Colors.blue[100],
-                            child: const Icon(Icons.vaccines_outlined),
+                            child: const Icon(Icons.people_outline_outlined),
                           ),
                           SizedBox(height: 10),
                           SizedBox(
                             width: 60,
                             height: 20,
                             child: Text(
-                              "Toko Obat",
+                              "Tentang Kami",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 8,

@@ -58,7 +58,6 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
     };
     var response = await http.get(url, headers: headers);
     final responseData = jsonDecode(response.body);
-    print(responseData);
     return Map<String, dynamic>.from(responseData['data']);
   }
 
@@ -187,7 +186,7 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${_formatPrice(snapshot.data!["service"]["price"])} per consultation',
+                                          '${_formatPrice(snapshot.data!["service"]["price"])} setiap konsultasi',
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.blue[700],
@@ -238,7 +237,8 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                       return Text(
                                         DateFormat('dd MMMM yyyy').format(
                                             DateTime.parse(
-                                                snapshot.data!['startTime'])),
+                                                    snapshot.data!['startTime'])
+                                                .toLocal()),
                                         style: const TextStyle(
                                             fontFamily: 'Poppins'),
                                       );
@@ -270,7 +270,8 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                       return Text(
                                         DateFormat('hh:mm a').format(
                                             DateTime.parse(
-                                                snapshot.data!['startTime'])),
+                                                    snapshot.data!['startTime'])
+                                                .toLocal()),
                                         style: const TextStyle(
                                             fontFamily: 'Poppins'),
                                       );
@@ -302,7 +303,8 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                       return Text(
                                         DateFormat('hh:mm a').format(
                                             DateTime.parse(
-                                                snapshot.data!['endTime'])),
+                                                    snapshot.data!['endTime'])
+                                                .toLocal()),
                                         style: const TextStyle(
                                             fontFamily: 'Poppins'),
                                       );
@@ -344,6 +346,36 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              const Text('Status Pembayaran',
+                                  style: TextStyle(fontFamily: 'Poppins')),
+                              FutureBuilder(
+                                  future: booking,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Shimmer.fromColors(
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[100]!,
+                                        child: Container(
+                                          width: 100,
+                                          height: 16,
+                                          color: Colors.grey[100],
+                                        ),
+                                      );
+                                    } else {
+                                      return Text(
+                                        snapshot.data!['transaction']['status'],
+                                        style: const TextStyle(
+                                            fontFamily: 'Poppins'),
+                                      );
+                                    }
+                                  }),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                               const Text('Biaya Konsultasi',
                                   style: TextStyle(fontFamily: 'Poppins')),
                               FutureBuilder(
@@ -364,38 +396,6 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                       return Text(
                                         _formatPrice(snapshot
                                             .data!['transaction']['price']),
-                                        style: const TextStyle(
-                                            fontFamily: 'Poppins'),
-                                      );
-                                    }
-                                  }),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Pajak',
-                                  style: TextStyle(fontFamily: 'Poppins')),
-                              FutureBuilder(
-                                  future: booking,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(
-                                          width: 100,
-                                          height: 16,
-                                          color: Colors.grey[100],
-                                        ),
-                                      );
-                                    } else {
-                                      return Text(
-                                        _formatPrice(
-                                            snapshot.data!['transaction']
-                                                ['platformFee']),
                                         style: const TextStyle(
                                             fontFamily: 'Poppins'),
                                       );
@@ -430,9 +430,7 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                                     } else {
                                       return Text(
                                         _formatPrice(snapshot
-                                                .data!['transaction']['price'] +
-                                            snapshot.data!['transaction']
-                                                ['platformFee']),
+                                            .data!['transaction']['price']),
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Poppins'),
@@ -448,72 +446,104 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Book Button
               FutureBuilder(
-                  future: booking,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ElevatedButton(
-                        onPressed: null,
-                        child: SizedBox(
-                          width: 100,
-                          height: 40,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.5,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          ),
+                future: booking,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(
+                        width: 120,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.grey[100],
                         ),
-                      );
-                    } else if (snapshot.data!['status'] == 'CONFIRMED' ||
-                        snapshot.data!['status'] == 'CANCELLED') {
-                      return ElevatedButton(
-                        onPressed: null,
-                        child: Text(
-                          (snapshot.data!['status'] == 'CANCELLED'
-                              ? 'Transaksi Dibatalkan'
-                              : 'Transaksi Selesai'),
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Poppins',
-                              color: Colors.white),
-                        ),
-                      );
-                    } else {
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    const Text('Redirecting to payment...'),
-                                backgroundColor: Colors.blue[700],
-                              ),
-                            );
-                            await _midtrans?.startPaymentUiFlow(
-                                token: snapshot.data!['transaction']
-                                    ['paymentToken']);
-                          },
+                      ),
+                    );
+                  } else if (snapshot.data!['status'] == 'CONFIRMED' ||
+                      snapshot.data!['status'] == 'CANCELLED') {
+                    return ElevatedButton(
+                      onPressed: null,
+                      child: Text(
+                        (snapshot.data!['status'] == 'CANCELLED'
+                            ? 'Transaksi Dibatalkan'
+                            : 'Transaksi Selesai'),
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            color: Colors.white),
+                      ),
+                    );
+                  } else if (snapshot.data!["status"] == 'FAILED') {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[400],
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.red[400],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           child: const Text(
-                            'Bayar Sekarang',
+                            'Refund',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Poppins',
                                 color: Colors.white),
                           ),
                         ),
-                      );
-                    }
-                  }),
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[400],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Reschedule',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Poppins',
+                                color: Colors.white),
+                          ),
+                        )
+                      ],
+                    );
+                  } else {
+                    return ElevatedButton(
+                      onPressed: () async {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Redirecting to payment...'),
+                            backgroundColor: Colors.blue[700],
+                          ),
+                        );
+                        await _midtrans?.startPaymentUiFlow(
+                            token: snapshot.data!['transaction']
+                                ['paymentToken']);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[400],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Bayar Sekarang',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            color: Colors.white),
+                      ),
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ),
