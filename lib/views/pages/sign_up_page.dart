@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:temanternak/models/user.dart';
 import 'package:temanternak/views/pages/login_page.dart';
+import 'package:http/http.dart' as http;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -11,6 +13,21 @@ class SignUpPage extends StatefulWidget {
 class SignUpPageState extends State<SignUpPage> {
   bool passwordVisible = false;
   bool confirmPasswordVisible = false;
+  User user = User();
+
+  void signUp() async {
+    var url = Uri.parse('https://api.temanternak.h14.my.id/users');
+    var response = await http.post(url, body: user.registertoJson());
+
+    if (response.statusCode == 200) {
+      Navigator.pop(
+          context, MaterialPageRoute(builder: (context) => const LoginPage()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Sign up failed'),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +58,7 @@ class SignUpPageState extends State<SignUpPage> {
                       child: Column(children: <Widget>[
                         Container(
                           alignment: Alignment.centerLeft,
-                          child: const Text('Username',
+                          child: const Text('Nama Lengkap',
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 14,
@@ -54,13 +71,16 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: TextField(
+                            onChanged: (value) {
+                              user.name = value;
+                            },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
                             decoration: InputDecoration(
                                 prefixIcon: const Icon(Icons.person_outline),
                                 contentPadding:
                                     const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                                hintText: 'Enter your username',
+                                hintText: 'Masukkan nama lengkap Anda',
                                 hintStyle: const TextStyle(
                                     fontSize: 12, fontFamily: 'Poppins'),
                                 border: OutlineInputBorder(
@@ -83,13 +103,16 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: TextField(
+                            onChanged: (value) {
+                              user.email = value;
+                            },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
                             decoration: InputDecoration(
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 contentPadding:
                                     const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                                hintText: 'Enter your email',
+                                hintText: 'Masukkan email Anda',
                                 hintStyle: const TextStyle(
                                     fontSize: 12, fontFamily: 'Poppins'),
                                 border: OutlineInputBorder(
@@ -99,7 +122,7 @@ class SignUpPageState extends State<SignUpPage> {
                         const SizedBox(height: 5),
                         Container(
                           alignment: Alignment.centerLeft,
-                          child: const Text('Phone Number',
+                          child: const Text('Nomor Telepon',
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 14,
@@ -112,13 +135,16 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: TextField(
+                            onChanged: (value) {
+                              user.phone = value;
+                            },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
                             decoration: InputDecoration(
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 contentPadding:
                                     const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                                hintText: 'Enter your phone number',
+                                hintText: 'Masukkan nomor telepon Anda',
                                 hintStyle: const TextStyle(
                                     fontSize: 12, fontFamily: 'Poppins'),
                                 border: OutlineInputBorder(
@@ -141,6 +167,9 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: TextField(
+                            onChanged: (value) {
+                              user.password = value;
+                            },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
                             obscureText: !passwordVisible,
@@ -158,7 +187,7 @@ class SignUpPageState extends State<SignUpPage> {
                                 ),
                                 contentPadding:
                                     const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                                hintText: 'Enter your password',
+                                hintText: 'Masukkan password Anda',
                                 hintStyle: const TextStyle(
                                     fontSize: 12, fontFamily: 'Poppins'),
                                 border: OutlineInputBorder(
@@ -168,7 +197,7 @@ class SignUpPageState extends State<SignUpPage> {
                         const SizedBox(height: 5),
                         Container(
                           alignment: Alignment.centerLeft,
-                          child: const Text('Confirm Password',
+                          child: const Text('Konfirmasi Password',
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 14,
@@ -181,6 +210,9 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: TextField(
+                            onChanged: (value) {
+                              user.password == value;
+                            },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
                             obscureText: !confirmPasswordVisible,
@@ -199,7 +231,7 @@ class SignUpPageState extends State<SignUpPage> {
                                 ),
                                 contentPadding:
                                     const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                                hintText: 'Confirm your password',
+                                hintText: 'Masukkan konfirmasi password Anda',
                                 hintStyle: const TextStyle(
                                     fontSize: 12, fontFamily: 'Poppins'),
                                 border: OutlineInputBorder(
@@ -211,7 +243,9 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              signUp();
+                            },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                                 shape: RoundedRectangleBorder(

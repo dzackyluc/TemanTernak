@@ -101,7 +101,7 @@ class AppBarExtendedState extends State<AppBarExtended> {
                     ],
                   )),
               Padding(
-                padding: EdgeInsets.fromLTRB(0, 12, 12, 0),
+                padding: const EdgeInsets.fromLTRB(0, 12, 12, 0),
                 child: Stack(
                   children: [
                     Container(
@@ -112,19 +112,19 @@ class AppBarExtendedState extends State<AppBarExtended> {
                       ),
                       child: IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.notifications, size: 20),
+                        icon: const Icon(Icons.notifications, size: 20),
                       ),
                     ),
                     Positioned(
                       right: 6,
                       top: 6,
                       child: Container(
-                        padding: EdgeInsets.all(1),
+                        padding: const EdgeInsets.all(1),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(7),
                         ),
-                        constraints: BoxConstraints(
+                        constraints: const BoxConstraints(
                           minWidth: 12,
                           minHeight: 12,
                         ),
@@ -139,7 +139,7 @@ class AppBarExtendedState extends State<AppBarExtended> {
           Row(
             children: [
               Padding(
-                  padding: EdgeInsets.fromLTRB(14, 0, 0, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 0, 0, 0),
                   child: Row(
                     children: [
                       Container(
@@ -177,7 +177,8 @@ class AppBarExtendedState extends State<AppBarExtended> {
                                   var data =
                                       snapshot.data as Map<String, dynamic>?;
                                   return SizedBox(
-                                    width: 280,
+                                    width:
+                                        MediaQuery.of(context).size.width - 100,
                                     child: Text(
                                         "Hello, ${data!['data']['name']}",
                                         style: const TextStyle(
@@ -185,12 +186,12 @@ class AppBarExtendedState extends State<AppBarExtended> {
                                             fontFamily: "Poppins",
                                             fontWeight: FontWeight.bold),
                                         maxLines: 1,
-                                        overflow: TextOverflow.clip),
+                                        overflow: TextOverflow.ellipsis),
                                   );
                                 }
                               }),
                           SizedBox(
-                            width: 265,
+                            width: MediaQuery.of(context).size.width - 110,
                             height: 30,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

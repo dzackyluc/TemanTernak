@@ -32,90 +32,141 @@ class ListChatPageState extends State<ListChatPage> {
     };
     var response = await http.get(url, headers: headers);
     final responseData = jsonDecode(response.body);
-    print(responseData);
     return List<Map<String, dynamic>>.from(responseData['data']);
+  }
+
+  Future<void> _refreshBookings() async {
+    setState(() {
+      bookings = getBookings();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height - 175,
+    return RefreshIndicator(
+      onRefresh: _refreshBookings,
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: bookings,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildShimmerLoading();
+          } else {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            } else if (snapshot.data?.isEmpty ?? true) {
+              return _buildEmptyState();
+            } else {
+              return _buildChatList(snapshot.data!);
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: CircleAvatar(radius: 25),
+            title: Container(
+              width: 150.0,
+              height: 20.0,
+              color: Colors.white,
+            ),
+            subtitle: Container(
+              width: 100.0,
+              height: 20.0,
+              color: Colors.white,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
       child: Column(
-        children: <Widget>[
-          SizedBox(
-            height: 560,
-            width: MediaQuery.of(context).size.width,
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: bookings,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: ListView.builder(
-                      itemCount: 5,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Container(
-                            width: 150.0,
-                            height: 20.0,
-                            color: Colors.white,
-                          ),
-                          subtitle: Container(
-                            width: 100.0,
-                            height: 20.0,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  } else if (snapshot.data?.isEmpty ?? true) {
-                    return Center(
-                      child: Text(
-                          'Belum Ada Chat Silahkan Booking Terlebih Dahulu'),
-                    );
-                  } else {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: CircleAvatar(
-                            radius: 25,
-                            backgroundColor: Colors.white,
-                            backgroundImage: NetworkImage(
-                                'https://api.temanternak.h14.my.id/${snapshot.data![index]['service']['veterinarian']['formalPicturePath']}'),
-                          ),
-                          title: Text(snapshot.data![index]['service']
-                              ['veterinarian']['nameAndTitle']),
-                          subtitle:
-                              Text(snapshot.data![index]['service']['name']),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatPage(
-                                    consultationId: snapshot.data![index]
-                                        ['id']),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  }
-                }
-              },
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Belum Ada Konsultasi',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 18,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Silakan Booking Konsultasi Terlebih Dahulu',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 14,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChatList(List<Map<String, dynamic>> data) {
+    return ListView.separated(
+      separatorBuilder: (context, index) => Divider(
+        color: Colors.grey[300],
+        height: 1,
+        indent: 80,
+      ),
+      itemCount: data.length,
+      itemBuilder: (context, index) {
+        var booking = data[index];
+        return ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: CircleAvatar(
+            radius: 30,
+            backgroundImage: NetworkImage(
+              'https://api.temanternak.h14.my.id/${booking['service']['veterinarian']['formalPicturePath']}',
+            ),
+          ),
+          title: Text(
+            booking['service']['veterinarian']['nameAndTitle'],
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          subtitle: Text(
+            booking['service']['name'],
+            style: TextStyle(
+              color: Colors.grey[600],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatPage(
+                  consultationId: booking['id'],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:temanternak/services/webrtc_service.dart';
 
 class VideoCallPage extends StatefulWidget {
-  const VideoCallPage({super.key});
+  final String token;
+  final String consultationId;
+
+  const VideoCallPage(
+      {super.key, required this.token, required this.consultationId});
 
   @override
   State<VideoCallPage> createState() => VideoCallPageState();
@@ -13,11 +19,24 @@ class VideoCallPageState extends State<VideoCallPage> {
   bool isSpeakerOn = true;
   bool isFrontCamera = true;
   Duration callDuration = Duration.zero;
+  late WebRTCService _webRTCService;
+  final List<RTCVideoRenderer> _remoteRenderers = [];
 
   @override
   void initState() {
     super.initState();
     startCallTimer();
+    _webRTCService = WebRTCService(
+      token: widget.token,
+      consultationId: widget.consultationId,
+    );
+    _webRTCService.initialize();
+    _webRTCService.remoteRenderers.listen((renderer) {
+      print('Remote renderer added');
+      setState(() {
+        _remoteRenderers.add(renderer);
+      });
+    }, onError: (error) => print('Error adding remote renderer: $error'));
   }
 
   void startCallTimer() {
@@ -42,7 +61,6 @@ class VideoCallPageState extends State<VideoCallPage> {
   }
 
   void _handleEndCall() {
-    // Add your call end logic here
     Navigator.of(context).pop();
   }
 
@@ -52,7 +70,6 @@ class VideoCallPageState extends State<VideoCallPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Main video feed (full screen)
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -64,21 +81,12 @@ class VideoCallPageState extends State<VideoCallPage> {
                       size: 80,
                       color: Colors.white54,
                     )
-                  : Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          fit: BoxFit.cover,
-                          image: NetworkImage(
-                              'https://placeholder.com/400x800'), // Replace with actual video feed
-                        ),
-                      ),
-                    ),
+                  : _remoteRenderers.isNotEmpty
+                      ? RTCVideoView(_remoteRenderers.first)
+                      : Container(),
             ),
           ),
 
-          // Top bar with participant info and call duration
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -208,19 +216,7 @@ class VideoCallPageState extends State<VideoCallPage> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      color: Colors.grey[900],
-                      child: const Center(
-                        child: Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: RTCVideoView(_webRTCService.localRenderer),
                 ),
               ),
             ),
@@ -250,5 +246,14 @@ class VideoCallPageState extends State<VideoCallPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _webRTCService.dispose();
+    // for (var renderer in _remoteRenderers) {
+    //   renderer.dispose();
+    // }
+    super.dispose();
   }
 }

@@ -58,9 +58,11 @@ class VeterinaryServicePageState extends State<VeterinaryServicePage> {
       "Authorization": "Bearer ${await storageService.getData("token")}"
     };
     var body = jsonEncode({
-      "startTime": selectedDate,
+      "startTime": DateTime.parse(selectedDate!).toUtc().toIso8601String(),
     });
-    await http.post(url, headers: headers, body: body);
+    await http
+        .post(url, headers: headers, body: body)
+        .then((response) => print(response.body));
   }
 
   List<DateTime> parseTimestamps(List<dynamic> timestampStrings) {

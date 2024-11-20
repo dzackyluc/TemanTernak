@@ -78,12 +78,7 @@ class HomePageState extends State<HomePage> {
                         children: [
                           FloatingActionButton(
                             heroTag: "ConsultationLogButton",
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => VideoCallPage()));
-                            },
+                            onPressed: () {},
                             backgroundColor: Colors.blue[100],
                             child: Icon(Icons.description_outlined),
                           ),
@@ -196,7 +191,7 @@ class HomePageState extends State<HomePage> {
               Padding(
                 padding: EdgeInsets.all(15),
                 child: Text(
-                  "Pesan Obat Sekarang",
+                  "Riwayat Konsultasi Terakhir",
                   style: TextStyle(
                       fontSize: 16,
                       fontFamily: "Poppins",
@@ -206,74 +201,27 @@ class HomePageState extends State<HomePage> {
               Padding(
                 padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
                 child: SizedBox(
-                  height: 120,
+                  height: 145,
                   width: MediaQuery.of(context).size.width,
-                  child: ListView(
+                  child: ListView.builder(
+                    itemCount: 3,
                     scrollDirection: Axis.horizontal,
-                    children: [
-                      Padding(
+                    itemBuilder: (context, index) {
+                      return Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Container(
-                          width: 200,
+                          width: 310,
                           decoration: BoxDecoration(
-                              image: DecorationImage(
-                                  image: NetworkImage(
-                                      "https://stgaccinwbsdevlrs01.blob.core.windows.net/newcorporatewbsite/blogs/october2023/detail-main-Brucellosis.jpg"),
-                                  colorFilter: ColorFilter.mode(
-                                      Colors.black.withOpacity(0.2),
-                                      BlendMode.darken),
-                                  fit: BoxFit.cover),
+                              color: Colors.blue[100],
                               borderRadius: BorderRadius.circular(10)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: Text("Obat Brucellosis",
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontFamily: "Poppins",
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white))),
-                            ],
+                          child: ListTile(
+                            title: Text("Konsultasi dengan Dokter Hewan"),
+                            subtitle: Text("Konsultasi pada 12/12/2021"),
+                            trailing: Icon(Icons.arrow_forward_ios),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Container(
-                          width: 200,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image: NetworkImage(
-                                    "https://dinpertanpangan.demakkab.go.id/wp-content/uploads/2022/10/MASTITIS-PENYAKIT-TERNAK-RUMINANSIA-PERAH.jpg"),
-                                colorFilter: ColorFilter.mode(
-                                    Colors.black.withOpacity(0.2),
-                                    BlendMode.darken),
-                                fit: BoxFit.cover),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.all(10),
-                                child: Text(
-                                  "Obat Mastitis",
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontFamily: "Poppins",
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ),

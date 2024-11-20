@@ -70,6 +70,20 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
     return formatter.format(price);
   }
 
+  void Refund() async {
+    StorageService storageService = StorageService();
+    String? token = await storageService.getData("token");
+    var url = Uri.parse(
+        "https://api.temanternak.h14.my.id/bookings/${widget.bookingId}/refund");
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    var response = await http.post(url, headers: headers);
+    final responseData = jsonDecode(response.body);
+    print(responseData);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -481,7 +495,10 @@ class BookingDetailsPageState extends State<BookingDetailsPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Refund();
+                            Navigator.of(context).pop();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red[400],
                             shape: RoundedRectangleBorder(

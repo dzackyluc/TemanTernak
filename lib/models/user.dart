@@ -22,9 +22,8 @@ class User {
     return jsonEncode(<String, String>{
       'name': name!,
       'email': email!,
-      'password': password!,
       'phone': phone!,
-      'username': username!
+      'password': password!,
     });
   }
 

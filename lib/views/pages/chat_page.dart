@@ -19,6 +19,7 @@ class ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [];
   late io.Socket socket;
+  bool _isConnected = false;
   StorageService storageService = StorageService();
   Map<String, dynamic>? _userData;
   Map<String, dynamic>? _consultationData;
@@ -64,7 +65,15 @@ class ChatPageState extends State<ChatPage> {
         setState(() {
           _consultationData = json.decode(response.body)['data'];
         });
-        _initializeSocket();
+        if (_consultationData!['token'] != null) {
+          _isConnected = true;
+          _initializeSocket();
+        } else {
+          setState(() {
+            _isConnected = false;
+            _initializeSocket();
+          });
+        }
       }
     } catch (e) {
       print('Error fetching consultation data: $e');
@@ -151,14 +160,12 @@ class ChatPageState extends State<ChatPage> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'John Doe',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  Text(
-                    'Online',
-                    style: TextStyle(fontSize: 12),
+                    _consultationData?['veterinarianNameAndTitle'] ??
+                        'Veterinarian',
+                    style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'),
+                    maxLines: 2,
                   ),
                 ],
               ),
@@ -169,9 +176,23 @@ class ChatPageState extends State<ChatPage> {
           IconButton(
               icon: Icon(Icons.video_call, color: Colors.blueGrey[800]),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return const VideoCallPage();
-                }));
+                if (_consultationData!['token'] != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VideoCallPage(
+                        consultationId: _consultationData!['id'],
+                        token: _consultationData!['token'],
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Dokter belum terhubung'),
+                    ),
+                  );
+                }
               }),
           IconButton(
             icon: Icon(Icons.more_vert, color: Colors.blueGrey[800]),
@@ -211,7 +232,7 @@ class ChatPageState extends State<ChatPage> {
               },
             ),
           ),
-          _buildMessageInput(),
+          if (_isConnected) _buildMessageInput(),
         ],
       ),
     );
