@@ -15,20 +15,6 @@ class SignUpPageState extends State<SignUpPage> {
   bool confirmPasswordVisible = false;
   User user = User();
 
-  void signUp() async {
-    var url = Uri.parse('https://api.temanternak.h14.my.id/users');
-    var response = await http.post(url, body: user.registertoJson());
-
-    if (response.statusCode == 200) {
-      Navigator.pop(
-          context, MaterialPageRoute(builder: (context) => const LoginPage()));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Sign up failed'),
-      ));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,6 +59,7 @@ class SignUpPageState extends State<SignUpPage> {
                           child: TextField(
                             onChanged: (value) {
                               user.name = value;
+                              print(user.name);
                             },
                             style: const TextStyle(
                                 fontSize: 12, fontFamily: 'Poppins'),
@@ -243,8 +230,24 @@ class SignUpPageState extends State<SignUpPage> {
                           width: 400,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: () {
-                              signUp();
+                            onPressed: () async {
+                              var url = Uri.parse('https://api.temanternak.h14.my.id/users');
+                              var response = await http.post(
+                                url,
+                                body: user.registertoJson(),
+                                headers: {
+                                  'Accept': 'application/json',
+                                  'Content-Type': 'application/json',
+                                });
+
+                              if (response.statusCode == 201) {
+                                Navigator.pop(
+                                    context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text('Sign up failed'),
+                                ));
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,

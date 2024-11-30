@@ -13,6 +13,11 @@ class HomePageState extends State<HomePage> {
   final GlobalKey<AppBarExtendedState> _appBarKey =
       GlobalKey<AppBarExtendedState>();
 
+  final List Dummy = [
+    "https://api.temanternak.h14.my.id/user_files/mobile_assets/banner/Banner1.png",
+    "https://api.temanternak.h14.my.id/user_files/mobile_assets/banner/Banner2.png"
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -167,7 +172,7 @@ class HomePageState extends State<HomePage> {
                   height: 180,
                   width: MediaQuery.of(context).size.width,
                   child: ListView.builder(
-                    itemCount: 3,
+                    itemCount: Dummy.length,
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (context, index) {
                       return Padding(
@@ -177,7 +182,7 @@ class HomePageState extends State<HomePage> {
                           decoration: BoxDecoration(
                             image: DecorationImage(
                                 image: NetworkImage(
-                                    "https://d1bpj0tv6vfxyp.cloudfront.net/articles/ca04f801-4384-42f5-b40a-835bf5b0e748_article_image_url.webp"),
+                                    Dummy[index]),
                                 fit: BoxFit.fill),
                             borderRadius: BorderRadius.circular(10),
                           ),

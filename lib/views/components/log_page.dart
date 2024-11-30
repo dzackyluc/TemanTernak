@@ -108,7 +108,7 @@ class LogPageState extends State<LogPage> {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               } else if (snapshot.data?.isEmpty ?? true) {
-                return const Center(child: Text('Belum Ada Transaksi'));
+                return _buildEmptyState();
               } else {
                 return ListView.separated(
                   itemCount: snapshot.data!.length,
@@ -205,6 +205,37 @@ class LogPageState extends State<LogPage> {
             }
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.description_outlined,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Belum Ada Transaksi',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 18,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Silahkan Melakukan Konsultasi Terlebih Dahulu',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

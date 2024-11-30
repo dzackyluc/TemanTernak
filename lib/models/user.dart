@@ -19,7 +19,7 @@ class User {
   }
 
   String registertoJson() {
-    return jsonEncode(<String, String>{
+    return jsonEncode(<String, dynamic>{
       'name': name!,
       'email': email!,
       'phone': phone!,
