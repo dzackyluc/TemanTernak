@@ -88,48 +88,16 @@ class AppBarExtendedState extends State<AppBarExtended> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_month),
-                      const SizedBox(width: 2),
-                      Text("$dayOfWeek , ${now.day} $month ${now.year}",
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontFamily: "Poppins",
-                              fontWeight: FontWeight.w600))
-                    ],
-                  )),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 12, 12, 0),
-                child: Stack(
+                padding: const EdgeInsets.fromLTRB(12, 25, 0, 0),
+                child: Row(
                   children: [
-                    Container(
-                      height: 40,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey, width: 2),
-                      ),
-                      child: IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.notifications, size: 20),
-                      ),
-                    ),
-                    Positioned(
-                      right: 6,
-                      top: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(1),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 12,
-                          minHeight: 12,
-                        ),
-                      ),
-                    ),
+                    const Icon(Icons.calendar_month),
+                    const SizedBox(width: 2),
+                    Text("$dayOfWeek , ${now.day} $month ${now.year}",
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontFamily: "Poppins",
+                            fontWeight: FontWeight.w600))
                   ],
                 ),
               ),

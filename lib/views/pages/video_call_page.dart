@@ -17,7 +17,6 @@ class VideoCallPageState extends State<VideoCallPage> {
   bool isMicMuted = false;
   bool isVideoOff = false;
   bool isSpeakerOn = true;
-  bool isFrontCamera = true;
   Duration callDuration = Duration.zero;
   late WebRTCService _webRTCService;
   final List<RTCVideoRenderer> _remoteRenderers = [];
@@ -86,7 +85,6 @@ class VideoCallPageState extends State<VideoCallPage> {
                       : Container(),
             ),
           ),
-
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -133,8 +131,6 @@ class VideoCallPageState extends State<VideoCallPage> {
               ),
             ),
           ),
-
-          // Bottom controls
           Positioned(
             left: 0,
             right: 0,
@@ -143,7 +139,6 @@ class VideoCallPageState extends State<VideoCallPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  // Upper row with speaker and camera switch
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -160,14 +155,13 @@ class VideoCallPageState extends State<VideoCallPage> {
                         icon: Icons.switch_camera_outlined,
                         onTap: () {
                           setState(() {
-                            isFrontCamera = !isFrontCamera;
+                            _webRTCService.switchCamera();
                           });
                         },
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Main controls row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -176,6 +170,7 @@ class VideoCallPageState extends State<VideoCallPage> {
                         onTap: () {
                           setState(() {
                             isVideoOff = !isVideoOff;
+                            _webRTCService.toggleVideo();
                           });
                         },
                       ),
@@ -184,6 +179,7 @@ class VideoCallPageState extends State<VideoCallPage> {
                         onTap: () {
                           setState(() {
                             isMicMuted = !isMicMuted;
+                            _webRTCService.toggleMute();
                           });
                         },
                       ),
@@ -198,16 +194,12 @@ class VideoCallPageState extends State<VideoCallPage> {
               ),
             ),
           ),
-
-          // Picture-in-picture view (local camera)
           if (!isVideoOff)
             Positioned(
               top: 100,
               right: 16,
               child: GestureDetector(
-                onPanUpdate: (details) {
-                  // Add drag functionality if needed
-                },
+                onPanUpdate: (details) {},
                 child: Container(
                   width: 120,
                   height: 180,

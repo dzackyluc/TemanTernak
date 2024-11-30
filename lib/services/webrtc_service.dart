@@ -13,6 +13,7 @@ class WebRTCService {
 
   final Map<String, RTCPeerConnection> _peers = {};
   final Map<String, RTCVideoRenderer> _remoteRenderers = {};
+  final Set<String> _connectedPeers = {};
 
   MediaStream? _localStream;
   bool _isMuted = false;
@@ -61,6 +62,19 @@ class WebRTCService {
     }
   }
 
+  void _cleanupPeerConnection(String socketId) {
+    // Close and remove peer connection
+    _peers[socketId]?.close();
+    _peers.remove(socketId);
+
+    // Dispose and remove renderer
+    _remoteRenderers[socketId]?.dispose();
+    _remoteRenderers.remove(socketId);
+
+    // Remove from connected peers set
+    _connectedPeers.remove(socketId);
+  }
+
   void _initializeSocket() {
     _socket = io.io(
         'https://realtime.temanternak.h14.my.id/',
@@ -80,6 +94,12 @@ class WebRTCService {
     _socket.on('user-connected', (data) async {
       final socketId = data[0];
       final userId = data[1];
+
+      // Clean up existing connection if any
+      if (_peers.containsKey(socketId)) {
+        _cleanupPeerConnection(socketId);
+      }
+
       final peerConnection = await _createPeerConnection(socketId);
       final offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
@@ -94,12 +114,22 @@ class WebRTCService {
       ]);
     });
 
+    _socket.on('user-disconnected', (data) {
+      final socketId = data[0];
+      _cleanupPeerConnection(socketId);
+    });
+
     _socket.on('offer', (data) async {
       final offer = data[0];
       final socketId = data[1];
       final userId = data[2];
       final isMuted = data[3];
       final isVideoOn = data[4];
+
+      // Clean up existing connection if any
+      if (_peers.containsKey(socketId)) {
+        _cleanupPeerConnection(socketId);
+      }
 
       final peerConnection = await _createPeerConnection(socketId);
       await peerConnection.setRemoteDescription(
@@ -130,10 +160,14 @@ class WebRTCService {
       final socketId = data[1];
       final peerConnection = _peers[socketId];
       if (peerConnection != null) {
-        await peerConnection.addCandidate(RTCIceCandidate(
-            candidate['candidate'],
-            candidate['sdpMid'],
-            candidate['sdpMLineIndex']));
+        try {
+          await peerConnection.addCandidate(RTCIceCandidate(
+              candidate['candidate'],
+              candidate['sdpMid'],
+              candidate['sdpMLineIndex']));
+        } catch (e) {
+          print('Error adding ICE candidate: $e');
+        }
       }
     });
   }
@@ -166,13 +200,32 @@ class WebRTCService {
     };
 
     // Handle incoming tracks
-    peerConnection.onTrack = (event) {
-      final renderer = RTCVideoRenderer();
-      renderer.initialize().then((_) {
+    peerConnection.onTrack = (event) async {
+      if (!_connectedPeers.contains(socketId)) {
+        _connectedPeers.add(socketId);
+
+        final renderer = RTCVideoRenderer();
+        await renderer.initialize();
         renderer.srcObject = event.streams[0];
         _remoteRenderers[socketId] = renderer;
         remoteRenderersController.add(renderer);
-      });
+      }
+    };
+
+    peerConnection.onConnectionState = (state) {
+      print('Peer connection state for $socketId: $state');
+      switch (state) {
+        case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
+          print('Connected to peer: $socketId');
+          break;
+        case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
+        case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
+        case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
+          _cleanupPeerConnection(socketId);
+          break;
+        default:
+          break;
+      }
     };
 
     _peers[socketId] = peerConnection;
@@ -184,7 +237,6 @@ class WebRTCService {
     _localStream?.getAudioTracks().forEach((track) {
       track.enabled = !_isMuted;
     });
-    // Notify socket about mute status
     _socket.emit('user-muted', [_isMuted]);
   }
 
@@ -193,7 +245,6 @@ class WebRTCService {
     _localStream?.getVideoTracks().forEach((track) {
       track.enabled = _isVideoOn;
     });
-    // Notify socket about video status
     _socket.emit('user-video-toggled', [_isVideoOn]);
   }
 
@@ -207,16 +258,12 @@ class WebRTCService {
   void dispose() {
     _socket.disconnect();
 
-    _peers.forEach((_, peerConnection) {
-      peerConnection.close();
-    });
+    // Clean up all peer connections
+    _peers.keys.toList().forEach(_cleanupPeerConnection);
     _peers.clear();
+    _connectedPeers.clear();
 
     localRenderer.dispose();
-    _remoteRenderers.forEach((_, renderer) {
-      renderer.dispose();
-    });
-
     _localStream?.dispose();
     remoteRenderersController.close();
   }

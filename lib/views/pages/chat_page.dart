@@ -163,7 +163,7 @@ class ChatPageState extends State<ChatPage> {
                 children: [
                   Text(
                     _consultationData?['veterinarianNameAndTitle'] ??
-                        'Veterinarian',
+                        'Waiting....',
                     style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'),
                     maxLines: 2,
                   ),
